@@ -7,6 +7,7 @@ package kademlia
 import (
 	"net"
 	"fmt"
+	//"strconv"
 )
 
 type KademliaCore struct {
@@ -117,7 +118,36 @@ func (kc *KademliaCore) FindNode(req FindNodeRequest, res *FindNodeResult) error
 
 	res.MsgID = CopyID(req.MsgID)
 	res.Nodes = kc.kademlia.RoutingTable[index].copyLine()
+	//if the current KBueckt does not contain K contacts
+	if len(res.Nodes) < K{
+		// find nodes front
+		
+		for i := index-1; i >= 0; i--{
+			for e := kc.kademlia.RoutingTable[i].Front(); e != nil; e = e.Next(){
+				if len(res.Nodes) == K{
+					break
+				}else{
+					c := e.Value.(Contact)
+					res.Nodes = append(res.Nodes,c)
+				}
+			}
+		}
+		// add all nodes in previous buckets, len < K, add behand
+		if len(res.Nodes) < K{
+			for i := index+1; i < len(kc.kademlia.RoutingTable)-1; i++{
+				for e := kc.kademlia.RoutingTable[i].Front(); e != nil; e = e.Next(){
+					if len(res.Nodes) == K{
+						break
+					}else{
+						c := e.Value.(Contact)
+						res.Nodes = append(res.Nodes,c)
+					}
+				}
+			}
+		}
+	}
 	res.Err = nil
+
 	//update channel
 
 	if req.Sender.NodeID != selfId{
@@ -167,6 +197,34 @@ func (kc *KademliaCore) FindValue(req FindValueRequest, res *FindValueResult) er
 			index = selfId.Xor(req.Key).PrefixLen()
 		}
 		res.Nodes = kc.kademlia.RoutingTable[index].copyLine()
+		/*--- if len(res.Nodes) < K ---*/
+		if len(res.Nodes) < K{
+		// find nodes front
+		
+			for i := index-1; i >= 0; i--{
+				for e := kc.kademlia.RoutingTable[i].Front(); e != nil; e = e.Next(){
+					if len(res.Nodes) == K{
+						break
+					}else{
+						c := e.Value.(Contact)
+						res.Nodes = append(res.Nodes,c)
+					}
+				}
+			}
+			// add all nodes in previous buckets, len < K, add behand
+			if len(res.Nodes) < K{
+				for i := index+1; i < len(kc.kademlia.RoutingTable)-1; i++{
+					for e := kc.kademlia.RoutingTable[i].Front(); e != nil; e = e.Next(){
+						if len(res.Nodes) == K{
+							break
+						}else{
+							c := e.Value.(Contact)
+							res.Nodes = append(res.Nodes,c)
+						}
+					}
+				}
+			}
+		}
 		if req.Sender.NodeID != selfId{
 			//update
 			kc.kademlia.RoutingTable[index].update(req.Sender)

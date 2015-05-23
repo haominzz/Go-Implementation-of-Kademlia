@@ -55,6 +55,7 @@ func (l *KBucket) update(curNode Contact) {
 		ok := l.checkFull() 
 		if !ok{
 			l.PushBack(curNode)
+			//fmt.Println("curNode id: " + curNode.NodeID.AsString())
 			fmt.Println("update condition 2 successfully")
 		}else{
 		//condition 3: contact not exist, this KBucket is full
